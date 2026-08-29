@@ -301,7 +301,7 @@ Security header, filename normalization, runtime schema, signaling authorization
 
 ### Status
 
-In progress — production container and local orchestration work has started. GitHub, registry publication, and final release gates remain outstanding.
+Complete — all Phase 7 acceptance criteria passed on 2026-08-29. Source, CI, and immutable release images are published; the remaining relay-only and native-picker limitations are explicitly outside the verified claims.
 
 ### Completed work
 
@@ -380,14 +380,18 @@ In progress — production container and local orchestration work has started. G
 - Created the new public repository `joeyjoey1234/byteroulette` only after confirming the supplied token authenticated as `joeyjoey1234`; no other repository was queried beyond the exact new destination existence check.
 - Initial source commit `7f484d63678a23c9b8cd82215be10478d25e56a4` was pushed to `main` after staged diff review and credential-pattern scanning.
 - First GitHub CI run `33275712326` passed both Docker image jobs but failed application lint because a clean checkout had not yet built the protocol package exported from `dist`; CI now explicitly builds `@byteroulette/protocol` before the required format/lint/type/test/build gates.
+- Corrected GitHub CI run `33275782906` → exit 0; frozen install, protocol bootstrap, formatting, linting, type-checking, 20 unit/integration tests, production build, Playwright E2E, production dependency audit, and both Docker builds passed.
+- Release tag `v0.1.0` points to verified source commit `037eaa518297edfbc885e3faa370326726d15f1b`.
+- Release workflow `33275885533` → exit 0; both images published with `0.1.0`, `sha-037eaa5`, and `latest` tags plus provenance and SBOM records.
+- Published web image → `ghcr.io/joeyjoey1234/byteroulette-web:0.1.0@sha256:851321780d94cf7ef18fd78218ebaaabdedb4d62be075909aeda138feb4e943d`.
+- Published signaling image → `ghcr.io/joeyjoey1234/byteroulette-signaling:0.1.0@sha256:e8da2846f99343bcb82788e3e38882a3cb206da4b18f9b073e53e3105161ba5c`.
 
 ### Known limitations
 
 - A real mobile-to-PC Tailscale-hosted exchange and Blob-fallback save passed. Native File System Access picker behavior remains unverified in an interactive supported desktop browser.
 - TURN credential minting, authenticated allocation, service health, and availability to browsers are verified. Forced relay-only transfer from separate restrictive networks is still not verified and is not claimed.
-- The current `.git` mount is not a valid writable repository (`git status` reports “not a git repository”), so the required diff review, commit, exact commit SHA, and push cannot be completed in this workspace state.
-- Repository destination, GitHub publication authorization, and GHCR authorization are not confirmed. Consequently no images were published and no immutable registry digests are available.
-- GitHub Actions files are locally format-validated but cannot be executed or reported green until a real GitHub repository exists.
+- The environment-provided `.git` mount remains empty and read-only. Phase 7 used an isolated Git object directory under `/tmp` with this workspace as its work tree; the resulting history and `main` branch are now preserved at `https://github.com/joeyjoey1234/byteroulette`.
+- GitHub reports non-failing notices that several third-party action versions target the deprecated Node.js 20 action runtime and are currently forced onto Node.js 24. Workflow jobs remain green; action-major upgrades should be reviewed when their maintainers publish supported versions.
 - The full Compose suite encountered an environment-level Chromium crashpad restriction after container recreation. The two production-critical tests pass outside that restricted launch path, and the same full container transfer had already passed earlier in Phase 7; this event is retained rather than hidden.
 
 ### Decisions affecting later phases
