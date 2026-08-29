@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#080b0b" />
+    <meta name="description" content="Consent-based peer-to-peer file exchange" />
+    <link rel="icon" href="/favicon.svg" />
+    <title>ByteRoulette — mutual file exchange</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <dialog id="information" aria-labelledby="information-title">
+      <form method="dialog"><button aria-label="Close information">CLOSE ×</button></form>
+      <p class="eyebrow">Protocol briefing</p>
+      <h2 id="information-title">How the exchange works</h2>
+      <ol>
+        <li>Signaling randomly pairs two sockets and relays only WebRTC negotiation.</li>
+        <li>
+          An encrypted DataChannel opens directly when possible or through TURN when required.
+        </li>
+        <li>File metadata crosses the peer channel. Both people must accept before bytes move.</li>
+        <li>Chunks are sequence-checked, written, and SHA-256 verified before completion.</li>
+      </ol>
+      <h3>Privacy and safety</h3>
+      <p>
+        No accounts, analytics, trackers, or server-side file storage exist. Signaling and TURN
+        operators can still observe IP addresses, timing, and traffic volume. Your peer learns the
+        filename, size, type, and contents.
+      </p>
+      <p class="warning">
+        Every peer and file is untrusted. ByteRoulette does not scan for malware, prove identity,
+        guarantee anonymity, or guarantee a direct route.
+      </p>
+    </dialog>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

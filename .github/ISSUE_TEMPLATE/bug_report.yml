@@ -1,0 +1,41 @@
+name: Bug report
+description: Report a reproducible ByteRoulette defect without private file data.
+title: '[Bug]: '
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Do not include filenames, file hashes, SDP, ICE candidates, TURN credentials, or other secrets.
+  - type: textarea
+    id: behavior
+    attributes:
+      label: What happened?
+      description: Describe expected and actual behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+    validations:
+      required: true
+  - type: dropdown
+    id: network
+    attributes:
+      label: Connection path shown by ByteRoulette
+      options: [Direct, TURN-relayed, Unresolved]
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: I removed filenames, hashes, SDP, ICE candidates, credentials, and other sensitive data.
+          required: true

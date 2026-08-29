@@ -1,0 +1,105 @@
+name: byteroulette
+secrets:
+  turn_shared_secret:
+    file: '${TURN_SHARED_SECRET_FILE:?Set TURN_SHARED_SECRET_FILE to an untracked secret file}'
+services:
+  web:
+    image: byteroulette-web:${VERSION:-dev}
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        {
+          VERSION: '${VERSION:-dev}',
+          REVISION: '${REVISION:-unknown}',
+          SOURCE_URL: '${SOURCE_URL:-}',
+          LICENSES: '${LICENSES:-Apache-2.0}',
+        }
+    read_only: true
+    tmpfs: [/tmp, /var/cache/nginx, /var/run]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    restart: unless-stopped
+    deploy: { resources: { limits: { cpus: '0.50', memory: 128M } } }
+  signaling:
+    image: byteroulette-signaling:${VERSION:-dev}
+    build:
+      context: .
+      dockerfile: apps/signaling/Dockerfile
+      args:
+        {
+          VERSION: '${VERSION:-dev}',
+          REVISION: '${REVISION:-unknown}',
+          SOURCE_URL: '${SOURCE_URL:-}',
+          LICENSES: '${LICENSES:-Apache-2.0}',
+        }
+    environment:
+      SIGNAL_ALLOWED_ORIGINS: '${PUBLIC_ORIGIN:-http://localhost:8080}'
+      SIGNAL_MAX_CONNECTIONS: '1000'
+      SIGNAL_MAX_QUEUE_SIZE: '500'
+      SIGNAL_MAX_MESSAGE_BYTES: '65536'
+      SIGNAL_QUEUE_TIMEOUT_MS: '120000'
+      SIGNAL_SESSION_TIMEOUT_MS: '900000'
+      SIGNAL_HEARTBEAT_MS: '20000'
+      STUN_URLS: '${STUN_URLS:-stun:stun.l.google.com:19302}'
+      TURN_URLS: '${TURN_URLS:-turn:localhost:3478?transport=udp}'
+      TURN_SHARED_SECRET_FILE: /tmp/turn_shared_secret
+      TURN_CREDENTIAL_TTL_SECONDS: '600'
+    secrets:
+      - source: turn_shared_secret
+        target: turn_shared_secret
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [SETUID, SETGID]
+    restart: unless-stopped
+    deploy: { resources: { limits: { cpus: '0.50', memory: 256M } } }
+  proxy:
+    image: nginxinc/nginx-unprivileged:1.27-alpine
+    depends_on:
+      web: { condition: service_healthy }
+      signaling: { condition: service_healthy }
+    volumes:
+      - ./deploy/reverse-proxy/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports: ['${HTTP_PORT:-8080}:8080']
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    healthcheck:
+      {
+        test: [CMD, wget, -q, -O, /dev/null, http://127.0.0.1:8080/health/live],
+        interval: 15s,
+        timeout: 3s,
+        retries: 3,
+      }
+    restart: unless-stopped
+    deploy: { resources: { limits: { cpus: '0.50', memory: 128M } } }
+  coturn:
+    image: coturn/coturn:4.6.3-alpine
+    entrypoint: [/bin/sh, -ec]
+    command:
+      - |
+        cp /etc/coturn/turnserver.conf /tmp/turnserver.conf
+        IFS= read -r turn_secret < /run/secrets/turn_shared_secret
+        printf '\nstatic-auth-secret=%s\n' "$${turn_secret}" >> /tmp/turnserver.conf
+        unset turn_secret
+        exec /bin/su nobody -s /bin/sh -c 'exec /usr/bin/turnserver -c /tmp/turnserver.conf --external-ip="$${TURN_EXTERNAL_IP}"'
+    environment:
+      TURN_EXTERNAL_IP: '${TURN_EXTERNAL_IP:?Set TURN_EXTERNAL_IP}'
+    secrets:
+      - source: turn_shared_secret
+        target: turn_shared_secret
+    volumes: ['./deploy/coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro']
+    ports: ['3478:3478/tcp', '3478:3478/udp', '49160-49200:49160-49200/udp']
+    read_only: true
+    tmpfs: [/tmp, /var/tmp]
+    user: '0:0'
+    # The upstream image already runs as nobody:nogroup. Its turnserver binary
+    # carries a narrow file capability that is incompatible with no-new-privileges
+    # and cap_drop: ALL, so those blanket controls are not applied to coturn.
+    healthcheck:
+      { test: [CMD, turnutils_stunclient, '127.0.0.1'], interval: 15s, timeout: 5s, retries: 5 }
+    restart: unless-stopped
+    deploy: { resources: { limits: { cpus: '0.50', memory: 256M } } }

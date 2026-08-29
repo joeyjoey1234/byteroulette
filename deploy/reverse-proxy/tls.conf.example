@@ -1,0 +1,9 @@
+# Mount certificates read-only and add this server block for production TLS.
+server {
+  listen 8443 ssl;
+  server_name byteroulette.example.com;
+  ssl_certificate /run/tls/tls.crt;
+  ssl_certificate_key /run/tls/tls.key;
+  ssl_protocols TLSv1.2 TLSv1.3;
+  # Copy the proxy locations from nginx.conf. Never bake certificates into images.
+}
