@@ -23,6 +23,8 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Workspace package exports resolve from dist in a completely clean checkout.
+      - run: pnpm --filter @byteroulette/protocol build
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck

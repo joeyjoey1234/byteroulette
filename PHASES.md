@@ -377,6 +377,9 @@ In progress — production container and local orchestration work has started. G
 - Corrected production-path Compose gate → production state isolation and the real bidirectional Unicode/binary transfer through `/signal` both passed (2/2); downloaded bytes are asserted by the transfer test.
 - Source credential-pattern scan found only the documented fake value in `.env.example`; unfinished-marker scan found no source TODO/FIXME or owner placeholder. Image-history inspection found no project secret-bearing build arguments or layers.
 - Tailscale continuity check → web and same-origin `/config` both returned HTTP 200 at `100.125.237.42:5173`; the HTTPS Serve URL remains `https://hashbrowns.taila6a64.ts.net/` for remote tailnet testing.
+- Created the new public repository `joeyjoey1234/byteroulette` only after confirming the supplied token authenticated as `joeyjoey1234`; no other repository was queried beyond the exact new destination existence check.
+- Initial source commit `7f484d63678a23c9b8cd82215be10478d25e56a4` was pushed to `main` after staged diff review and credential-pattern scanning.
+- First GitHub CI run `33275712326` passed both Docker image jobs but failed application lint because a clean checkout had not yet built the protocol package exported from `dist`; CI now explicitly builds `@byteroulette/protocol` before the required format/lint/type/test/build gates.
 
 ### Known limitations
 
